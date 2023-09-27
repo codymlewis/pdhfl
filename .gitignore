@@ -1,0 +1,11 @@
+__pycache__/
+.ipynb_checkpoints/
+results/
+plots/
+*.pyc
+*.pkl
+*.png
+tags
+Session.vim
+.venv
+*.variables
