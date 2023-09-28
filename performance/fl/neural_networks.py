@@ -32,10 +32,10 @@ class CNN(nn.Module):
     @nn.compact
     def __call__(self, x):
         for l in range(round(5 * self.pd)):
-            x = nn.Conv(round(16 * (2**l) * self.pw), kernel_size=(3, 3), name=f"Conv{l}_1")(x)
+            x = nn.Conv(round(32 * (2**l) * self.pw), kernel_size=(3, 3), name=f"Conv{l}_1")(x)
             x = x * self.scale
             x = nn.relu(x)
-            x = nn.Conv(round(16 * (2**l) * self.pw), kernel_size=(3, 3), name=f"Conv{l}_2")(x)
+            x = nn.Conv(round(32 * (2**l) * self.pw), kernel_size=(3, 3), name=f"Conv{l}_2")(x)
             x = x * self.scale
             x = nn.relu(x)
             x = nn.max_pool(x, (2, 2), strides=(2, 2))

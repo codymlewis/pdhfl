@@ -1,7 +1,7 @@
 #!/bin/bash
 
 for framework in "pdhfl" "heterofl" "fjord" "feddrop" "local" "fedavg"; do
-    for dataset in "mnist" "har" "nbaiot_10" "cifar10" "cifar100"; do
+    for dataset in "mnist" "har" "nbaiot" "cifar10" "cifar100"; do
         if [[ $framework == "fedavg" ]] || [[ $framework == "local" ]]; then
             allocations=("full")
         else
