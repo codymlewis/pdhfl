@@ -7,3 +7,4 @@ einops
 scikit-learn
 jaxopt
 Pillow
+matplotlib

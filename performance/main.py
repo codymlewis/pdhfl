@@ -157,6 +157,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--allocation", type=str, default="full", help="Type of model allocation scheme to follow (can be one of full|cyclic|sim).")
     parser.add_argument("-f", "--framework", type=str, default="fedavg", help="Federated learning framework to follow")
     parser.add_argument("-psc", "--proportion-clients", type=float, default=1.0, help="Proportion of clients that the server selects for training in each round.")
+    parser.add_argument("--gen-plot-data", action="store_true", help="Save the ongoing performance in a format for plotting.")
     args = parser.parse_args()
     print(f"Starting experiment with config: {args.__dict__}")
 
@@ -248,16 +249,28 @@ if __name__ == "__main__":
             C=args.proportion_clients,
             seed=args.seed
         )
+        if args.gen_plot_data:
+            running_analytics = []
+            running_evaluations = []
         for _ in (pbar := trange(args.rounds)):
             loss = server.step()
             pbar.set_postfix_str(f"Loss: {loss:.3f}")
+            if args.gen_plot_data:
+                running_analytics.append(server.analytics())
+                running_evaluations.append(server.evaluate())
         results = {"analytics": server.analytics(), "evaluation": server.evaluate()}
 
     print(f"Results: {results}")
     print(f"Finished in {time.time() - start_time:.3f} seconds")
 
     os.makedirs("results", exist_ok=True)
-    filename = "results/{}".format("_".join([f"{k}={v}" for k, v in args.__dict__.items()]))
+    filename = "results/{}.json".format("_".join([f"{k}={v}" for k, v in args.__dict__.items() if k not in ["gen_plot_data"]]))
     with open(filename, 'w') as f:
         json.dump(results, f)
     print(f"Results written to {filename}")
+
+    if args.gen_plot_data:
+        filename = "results/plot_{}.json".format("_".join([f"{k}={v}" for k, v in args.__dict__.items() if k not in ["gen_plot_data"]]))
+        with open(filename, 'w') as f:
+            json.dump({"analytics": running_analytics, "evaluation": running_evaluations}, f)
+        print(f"Plotting data written to {filename}")
