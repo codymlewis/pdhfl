@@ -186,7 +186,7 @@ if __name__ == "__main__":
     else:
         allocation_scheme = {
             "full": ([1.0], [1.0]),
-            "cyclic": ([0.3, 0.5, 1.0], [0.3, 0.5, 1.0] if args.framework not in ["fjord"] else [1.0, 1.0, 1.0]),
+            "cyclic": ([0.3, 0.5, 1.0], [0.3, 0.5, 1.0] if args.framework not in ["fjord", "feddrop"] else [1.0, 1.0, 1.0]),
         }[args.allocation]
 
     if args.dataset in ["cifar10", "cifar100"]:
