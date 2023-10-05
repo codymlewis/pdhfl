@@ -59,8 +59,13 @@ class Server:
 
     def analytics(self):
         global_parameters = self.model.get_parameters()
-        client_analytics = [c.analytics(global_parameters) for c in self.clients]
-        return {"mean": np.mean(client_analytics), "std": np.std(client_analytics)}
+        client_analytics = np.array([c.analytics(global_parameters) for c in self.clients])
+        return {
+            "mean": client_analytics.mean(),
+            "std": client_analytics.std(),
+            "min": client_analytics.min(),
+            "max": client_analytics.max(),
+        }
 
     def evaluate(self):
         return self.model.evaluate(self.model.parameters, self.test_data['X'], self.test_data['Y'])

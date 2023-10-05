@@ -151,13 +151,13 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--clients", type=int, default=0, help="Number of clients in the FL system.")
     parser.add_argument("-s", "--seed", type=int, default=42, help="Seed for the experiment.")
     parser.add_argument("-r", "--rounds", type=int, default=10, help="Number of rounds to train for.")
+    parser.add_argument("--eval-every", type=int, default=1, help="Number of rounds between evaluations.")
     parser.add_argument("-e", "--epochs", type=int, default=1, help="Number of epochs that the clients should train for each round.")
     parser.add_argument("-spe", "--steps-per-epoch", type=int, default=None, help="Number of steps of training to perform each epoch (default: a full pass through the dataset).")
     parser.add_argument("-b", "--batch-size", type=int, default=32, help="Minibatch size of the clients.")
     parser.add_argument("-a", "--allocation", type=str, default="full", help="Type of model allocation scheme to follow (can be one of full|cyclic|sim).")
     parser.add_argument("-f", "--framework", type=str, default="fedavg", help="Federated learning framework to follow")
     parser.add_argument("-psc", "--proportion-clients", type=float, default=1.0, help="Proportion of clients that the server selects for training in each round.")
-    parser.add_argument("--gen-plot-data", action="store_true", help="Save the ongoing performance in a format for plotting.")
     args = parser.parse_args()
     print(f"Starting experiment with config: {args.__dict__}")
 
@@ -185,6 +185,7 @@ if __name__ == "__main__":
             allocation_scheme = json.load(f)[args.framework]
     else:
         allocation_scheme = {
+            # "full": ([0.3], [0.3]),
             "full": ([1.0], [1.0]),
             "cyclic": ([0.3, 0.5, 1.0], [0.3, 0.5, 1.0] if args.framework not in ["fjord", "feddrop"] else [1.0, 1.0, 1.0]),
         }[args.allocation]
@@ -249,28 +250,22 @@ if __name__ == "__main__":
             C=args.proportion_clients,
             seed=args.seed
         )
-        if args.gen_plot_data:
-            running_analytics = []
-            running_evaluations = []
-        for _ in (pbar := trange(args.rounds)):
+        running_analytics = []
+        running_evaluations = []
+        for r in (pbar := trange(args.rounds)):
             loss = server.step()
             pbar.set_postfix_str(f"Loss: {loss:.3f}")
-            if args.gen_plot_data:
+            if r % args.eval_every == 0 or r == (args.rounds - 1):
                 running_analytics.append(server.analytics())
                 running_evaluations.append(server.evaluate())
-        results = {"analytics": server.analytics(), "evaluation": server.evaluate()}
+        results = {"analytics": running_analytics, "evaluation": running_evaluations}
 
-    print(f"Results: {results}")
+    print(f"Results: analytics={running_analytics[-1]}, evaluation={running_evaluations[-1]}")
     print(f"Finished in {time.time() - start_time:.3f} seconds")
 
     os.makedirs("results", exist_ok=True)
-    filename = "results/{}.json".format("_".join([f"{k}={v}" for k, v in args.__dict__.items() if k not in ["gen_plot_data"]]))
+    arg_specs = "_".join([f"{k}={v}" for k, v in args.__dict__.items() if k not in ["gen_plot_data"]])
+    filename = f"results/{arg_specs}.json"
     with open(filename, 'w') as f:
         json.dump(results, f)
     print(f"Results written to {filename}")
-
-    if args.gen_plot_data:
-        filename = "results/plot_{}.json".format("_".join([f"{k}={v}" for k, v in args.__dict__.items() if k not in ["gen_plot_data"]]))
-        with open(filename, 'w') as f:
-            json.dump({"analytics": running_analytics, "evaluation": running_evaluations}, f)
-        print(f"Plotting data written to {filename}")

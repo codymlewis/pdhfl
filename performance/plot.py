@@ -10,7 +10,7 @@ def create_plot(plot_data, save_filename):
     evaluations = np.array(plot_data['evaluation'])
     rounds = np.arange(len(evaluations)) + 1
     plt.plot(rounds, analytics['mean'], label="Local", marker='s', markevery=15)
-    plt.fill_between(rounds, analytics['mean'] - analytics['std'], analytics['mean'] + analytics['std'], alpha=0.2)
+    plt.fill_between(rounds, analytics['min'], analytics['max'], alpha=0.2)
     if "pdhfl" not in save_filename:
         plt.plot(rounds, evaluations, label="Global", marker='^', markevery=15)
         plt.legend(title="Model", loc='lower right')
@@ -24,7 +24,8 @@ def create_plot(plot_data, save_filename):
 
 
 if __name__ == "__main__":
-    plot_data_fns = [fn for fn in os.listdir("results") if fn.startswith("plot")]
+    plot_data_fns = [fn for fn in os.listdir("results") if re.search("dataset=mnist.*seed=1.*allocation=sim.*framework=(pdhfl|feddrop|heterofl|fjord)", fn)]
+    print(plot_data_fns)
     for plot_data_fn in plot_data_fns:
         with open(f"results/{plot_data_fn}", "r") as f:
             create_plot(json.load(f), plot_data_fn[re.search("framework=", plot_data_fn).end():re.search("framework=[a-z]+_", plot_data_fn).end() - 1] + ".png")
