@@ -185,7 +185,6 @@ if __name__ == "__main__":
             allocation_scheme = json.load(f)[args.framework]
     else:
         allocation_scheme = {
-            # "full": ([0.3], [0.3]),
             "full": ([1.0], [1.0]),
             "cyclic": ([0.3, 0.5, 1.0], [0.3, 0.5, 1.0] if args.framework not in ["fjord", "feddrop"] else [1.0, 1.0, 1.0]),
         }[args.allocation]
