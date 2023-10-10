@@ -15,13 +15,14 @@ for framework in ${frameworks[@]}; do
 
         for allocation in ${allocations[@]}; do
             for seed in {1..5}; do
-                python main.py --rounds 50 --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size 128
-
                 if [[ $dataset == "nbaiot" ]]; then
-                    python main.py --rounds 50 --clients 90 --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size 128
-                    python main.py --rounds 50 --clients 90 --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size 128 --proportion-clients 0.1
+                    python main.py --rounds 50 --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size 128 --steps-per-epoch 500
+                    python main.py --rounds 50 --clients 90 --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size 128 --steps-per-epoch 500
+                    python main.py --rounds 50 --clients 90 --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size 128 --proportion-clients 0.1 --steps-per-epoch 500
                 elif [[ $dataset == "cifar100" ]]; then
                     python main.py --rounds 50 --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size 128 --proportion-clients 0.1
+		else
+                    python main.py --rounds 50 --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size 128
                 fi
             done
         done
