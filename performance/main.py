@@ -133,7 +133,7 @@ def nbaiot() -> Tuple[data_manager.Dataset, NDArray]:
         'device': e['device'],
     })
     rng = np.random.default_rng(0)
-    idxs = {t: rng.choice(len(ds[t]), len(ds[t]) // 100, replace=False) for t in ['train', 'test']}
+    idxs = {t: rng.choice(len(ds[t]), len(ds[t]) // 10, replace=False) for t in ['train', 'test']}
     data = {t: {'X': ds[t]['features'][idxs[t]], 'Y': ds[t]['attack'][idxs[t]]} for t in ['train', 'test']}
     dataset = data_manager.Dataset(data)
     return dataset, ds['train']['device'][idxs['train']]
@@ -186,7 +186,7 @@ if __name__ == "__main__":
             allocation_scheme = json.load(f)[args.framework]
     else:
         allocation_scheme = {
-            "full": ([0.2], [0.3]),
+            "full": ([1.0], [1.0]),
             "cyclic": ([0.3, 0.5, 1.0], [0.3, 0.5, 1.0] if args.framework not in ["fjord", "feddrop"] else [1.0, 1.0, 1.0]),
         }[args.allocation]
 
