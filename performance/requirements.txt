@@ -8,3 +8,4 @@ scikit-learn
 jaxopt
 Pillow
 matplotlib
+rarfile

@@ -128,13 +128,15 @@ def nbaiot() -> Tuple[data_manager.Dataset, NDArray]:
     min_vals = np.min(ds['train']['features'], axis=0)
     max_vals = np.max(ds['train']['features'], axis=0)
     ds = ds.map(lambda e: {
-        'features': (e['features'] - min_vals) / (max_vals - min_vals),
-        'attack': e['attack'],
+        'features': (e['features'] - min_vals) / (max_vals - min_vals),  # Normalise
+        'attack': 0 if e['attack'] == 0 else 1,  # Make the dataset binary: 0=benign, 1=attack
         'device': e['device'],
     })
-    data = {t: {'X': ds[t]['features'], 'Y': ds[t]['attack']} for t in ['train', 'test']}
+    rng = np.random.default_rng(0)
+    idxs = {t: rng.choice(len(ds[t]), len(ds[t]) // 100, replace=False) for t in ['train', 'test']}
+    data = {t: {'X': ds[t]['features'][idxs[t]], 'Y': ds[t]['attack'][idxs[t]]} for t in ['train', 'test']}
     dataset = data_manager.Dataset(data)
-    return dataset, ds['train']['device']
+    return dataset, ds['train']['device'][idxs['train']]
 
 
 def client_ids_to_idx(ids):
@@ -174,10 +176,9 @@ if __name__ == "__main__":
             for cidx in client_idx:
                 new_client_idx.extend(np.array_split(rng.permutation(cidx), nsplits))
             client_idx = new_client_idx
-    nclients = dataset.nclasses if args.clients <= 0 else args.clients
-
 
     if args.dataset in ["mnist", "cifar10", "cifar100", "tinyimagenet"]:
+        nclients = dataset.nclasses if args.clients <= 0 else args.clients
         client_idx = lda(dataset['train']['Y'], nclients, dataset.nclasses, rng, alpha=0.5)
 
     if args.allocation == "sim":
@@ -185,7 +186,7 @@ if __name__ == "__main__":
             allocation_scheme = json.load(f)[args.framework]
     else:
         allocation_scheme = {
-            "full": ([1.0], [1.0]),
+            "full": ([0.2], [0.3]),
             "cyclic": ([0.3, 0.5, 1.0], [0.3, 0.5, 1.0] if args.framework not in ["fjord", "feddrop"] else [1.0, 1.0, 1.0]),
         }[args.allocation]
 
@@ -239,7 +240,10 @@ if __name__ == "__main__":
             client_analytics.append(client.analytics(parameters))
             pbar.set_postfix_str(f"Loss: {loss:.3f}, ACC: {client_analytics[-1]:.3%}")
             del client
-        results = {"analytics": {"mean": np.mean(client_analytics), "std": np.std(client_analytics)}} 
+        results = {
+            "analytics": [{"mean": np.mean(client_analytics), "std": np.std(client_analytics), "min": np.min(client_analytics), "max": np.max(client_analytics)}],
+            "evaluation": [0.0],
+        } 
     else:
         server = fl.server.Server(
             fl.model.Model(create_model_fn, dataset.input_shape, "sgd", "crossentropy_loss", seed=args.seed),
@@ -259,7 +263,7 @@ if __name__ == "__main__":
                 running_evaluations.append(server.evaluate())
         results = {"analytics": running_analytics, "evaluation": running_evaluations}
 
-    print(f"Results: analytics={running_analytics[-1]}, evaluation={running_evaluations[-1]}")
+    print(f"Results: analytics={results['analytics'][-1]}, evaluation={results['evaluation'][-1]}")
     print(f"Finished in {time.time() - start_time:.3f} seconds")
 
     os.makedirs("results", exist_ok=True)
