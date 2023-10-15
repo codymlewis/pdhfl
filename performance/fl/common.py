@@ -15,20 +15,17 @@ def crossentropy_loss(model):
 
 def partition(parameters, global_parameters):
     return {
-        k: {
-            dk: global_parameters[k][dk][tuple(slice(ps) for ps in dp.shape)] for dk, dp in d.items()
-        }
-        for k, d in parameters.items()
+        k: partition(v, global_parameters[k]) if isinstance(v, dict) else global_parameters[k][tuple(slice(ps) for ps in v.shape)]
+        for k, v in parameters.items()
     }
 
 
 def expand(parameters, global_parameters):
     return {
-        k: {
-            gdk: jnp.pad(parameters[k][gdk], tuple((0, gs - ps) for ps, gs in zip(parameters[k][gdk].shape, gdp.shape))) if parameters.get(k) else jnp.zeros_like(gdp, dtype=gdp.dtype)
-            for gdk, gdp in gd.items()
-        }
-        for k, gd in global_parameters.items()
+        k: expand(parameters.get(k), v) if isinstance(v, dict) else (
+            jnp.pad(parameters[k], tuple((0, gs - ps) for ps, gs in zip(parameters[k].shape, v.shape))) if parameters else jnp.zeros_like(v, dtype=v.dtype)
+        )
+        for k, v in global_parameters.items()
     }
 
 
