@@ -136,14 +136,3 @@ class DenseNet121(nn.Module):
         x = nn.Dense(self.classes, name="predictions")(x)
         x = nn.softmax(x)
         return x
-
-
-# class DenseNet121(nn.Module):
-#     classes: int = 1000
-#     pw: float = 1.0
-#     pd: float = 1.0
-#     scale: float = 1.0
-
-#     @nn.compact
-#     def __call__(self, x, train=True):
-#         return DenseNet(self.classes, [6, 12, 24, 16], self.pw, self.pd, self.scale)(x, train)

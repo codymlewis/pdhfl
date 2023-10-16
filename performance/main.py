@@ -245,7 +245,7 @@ if __name__ == "__main__":
         results = {
             "analytics": [{"mean": np.mean(client_analytics), "std": np.std(client_analytics), "min": np.min(client_analytics), "max": np.max(client_analytics)}],
             "evaluation": [0.0],
-        } 
+        }
     else:
         server = fl.server.Server(
             fl.model.Model(create_model_fn, dataset.input_shape, "sgd", "crossentropy_loss", seed=args.seed),
