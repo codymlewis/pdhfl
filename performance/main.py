@@ -125,10 +125,10 @@ def har() -> Tuple[data_manager.Dataset, NDArray]:
 def nbaiot() -> Tuple[data_manager.Dataset, NDArray]:
     ds = datasets.load_dataset("codymlewis/nbaiot")
     ds.set_format('numpy')
-    min_vals = np.min(ds['train']['features'], axis=0)
-    max_vals = np.max(ds['train']['features'], axis=0)
+    mean_vals = np.mean(ds['train']['features'], axis=0)
+    std_vals = np.std(ds['train']['features'], axis=0)
     ds = ds.map(lambda e: {
-        'features': (e['features'] - min_vals) / (max_vals - min_vals),  # Normalise
+        'features': (e['features'] - mean_vals) / std_vals,  # Normalise
         'attack': 0 if e['attack'] == 0 else 1,  # Make the dataset binary: 0=benign, 1=attack
         'device': e['device'],
     })
@@ -263,6 +263,7 @@ if __name__ == "__main__":
             if r % args.eval_every == 0 or r == (args.rounds - 1):
                 running_analytics.append(server.analytics())
                 running_evaluations.append(server.evaluate())
+                tqdm.write(f"Round {r} Accuracy: {running_evaluations[-1]:.3%}")
         results = {"analytics": running_analytics, "evaluation": running_evaluations}
 
     print(f"Results: analytics={results['analytics'][-1]}, evaluation={results['evaluation'][-1]}")
