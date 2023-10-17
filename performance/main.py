@@ -126,7 +126,7 @@ def nbaiot() -> Tuple[data_manager.Dataset, NDArray]:
     ds = datasets.load_dataset("codymlewis/nbaiot")
     ds.set_format('numpy')
     mean_vals = np.mean(ds['train']['features'], axis=0)
-    std_vals = np.std(ds['train']['features'], axis=0)
+    std_vals = np.std(ds['train']['features'], dtype=np.float64, axis=0).astype(np.float32)
     ds = ds.map(lambda e: {
         'features': (e['features'] - mean_vals) / std_vals,  # Normalise
         'attack': 0 if e['attack'] == 0 else 1,  # Make the dataset binary: 0=benign, 1=attack
