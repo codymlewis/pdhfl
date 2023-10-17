@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--allocation", type=str, default="cyclic", help="The allocation type to look at the results from.")
     args = parser.parse_args()
 
-    result_data_fns = [fn for fn in os.listdir("results/") if "plot" not in fn]
+    result_data_fns = [fn for fn in os.listdir("results/") if "rounds=50" in fn]
     datasets = set(fn[re.search('dataset=', fn).end():re.search('dataset=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns)
     frameworks = set(fn[re.search('framework=', fn).end():re.search('framework=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns)
     allocations = set(fn[re.search('allocation=', fn).end():re.search('allocation=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns)

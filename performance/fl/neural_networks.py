@@ -31,15 +31,15 @@ class CNN(nn.Module):
 
     @nn.compact
     def __call__(self, x):
-        for l in range(round(5 * self.pd)):
-            x = nn.Conv(round(32 * (2**l) * self.pw), kernel_size=(3, 3), name=f"Conv{l}_1")(x)
-            x = x * self.scale
-            x = nn.relu(x)
-            x = nn.Conv(round(32 * (2**l) * self.pw), kernel_size=(3, 3), name=f"Conv{l}_2")(x)
-            x = x * self.scale
-            x = nn.relu(x)
+        for l in range(5):
+            if l < round(5 * self.pd):
+                x = nn.Conv(round(32 * (2**l) * self.pw), kernel_size=(3, 3), name=f"Conv{l}_1")(x)
+                x = x * self.scale
+                x = nn.relu(x)
+                x = nn.Conv(round(32 * (2**l) * self.pw), kernel_size=(3, 3), name=f"Conv{l}_2")(x)
+                x = x * self.scale
+                x = nn.relu(x)
             x = nn.max_pool(x, (2, 2), strides=(2, 2))
-        x = jnp.pad(x, [(0, 0)] + [(0, s * 2**round(5 * self.pd) - s) for s in x.shape[1:-1]] + [(0, 0)])
         x = x.reshape((x.shape[0], -1))
         x = nn.Dense(128, name="Dense1")(x)
         x = x * self.scale
