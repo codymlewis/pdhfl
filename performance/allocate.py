@@ -8,6 +8,7 @@ from enum import Enum
 import json
 import math
 
+import numpy as np
 import jax
 import jax.numpy as jnp
 import jax.scipy as jsp
@@ -45,7 +46,7 @@ def round_limiter(time, T):
     """
     @jax.jit
     def _apply(p):
-        return jsp.stats.norm.pdf(time(p), loc=T, scale=0.5)
+        return jnp.where(time(p) > T, 0.1 * jsp.stats.norm.pdf(time(p), loc=T, scale=0.5), jsp.stats.norm.pdf(time(p), loc=T, scale=0.5))
     return _apply
 
 
@@ -66,7 +67,7 @@ def heterofl_time(p):
 
 @jax.jit
 def feddrop_time(p):
-    return 0.14 * (1 + 0.2 * p[0])
+    return (0.14 * (1 + 0.2 * p[0]))**0.5
 
 
 def conv_time(p):
@@ -97,10 +98,9 @@ def laptop_time(base_time):
 class Client:
     "A client in the FL network, will attempt to find the optimal partition"
 
-    def __init__(self, i, lamb, lrs, T, algorithm):
+    def __init__(self, i, lamb, lrs, T, algorithm, rng):
         self.T = T
-        self.p = jnp.array([0.01, 0.01 if algorithm != "fjord" else 1.0])
-        # self.p = jnp.array([np.random.uniform(), np.random.uniform()])
+        self.p = jnp.array([rng.uniform(), rng.uniform() if algorithm != "fjord" else 1.0])
         self.time = {
             Device.BIG.value: bigcom_time,
             Device.LITTLE.value: littlecom_time,
@@ -126,8 +126,8 @@ class Client:
 class Server:
     "A server that co-ordinates the FL process"
 
-    def __init__(self, nclients, lamb, lrs, T, algorithm="pdhfl"):
-        self.clients = [Client(i % 3, lamb, lrs(), T, algorithm) for i in range(nclients)]
+    def __init__(self, nclients, lamb, lrs, T, algorithm="pdhfl", rng=np.random.default_rng()):
+        self.clients = [Client(i % 3, lamb, lrs(), T, algorithm, rng) for i in range(nclients)]
 
     def step(self):
         "Get all clients to perform a step of utility optimization and return the mean utility"
@@ -138,16 +138,14 @@ class Server:
 class LearningRateSchedule:
     "Class for handling the learning rate, after a certain number of rounds it decays to a smaller rate for fine tuning"
 
-    def __init__(self, lr0, decay_time):
+    def __init__(self, lr0):
         self.lr = lr0
-        self.decay_time = decay_time
         self.time = 0
 
     @property
     def learning_rate(self):
-        if self.decay_time == self.time:
-            self.lr *= 0.1
         self.time += 1
+        self.lr = self.lr * 0.999
         return self.lr
 
 
@@ -160,21 +158,22 @@ if __name__ == "__main__":
     allocations = {}
     # p = [p_w, p_d]
     T = 1/3
+    epochs = 300
     for algorithm in ["pdhfl", "fjord", "heterofl"]:
         print(f"Optimizing allocations for {algorithm}")
-        epochs = 800
-        server = Server(
-            nclients=3, lamb=0.1, lrs=lambda: LearningRateSchedule(0.1, int(epochs/2)), T=T, algorithm=algorithm
-        )
-        for _ in (pbar := trange(epochs)):
-            utility_val = server.step()
-            pbar.set_postfix_str(f"UTIL: {utility_val:.5f}")
-        print(
-            "Final allocation: {}".format(
-                [f'p={round_down(c.p)}, t_i(p)={c.time(round_down(c.p))}' for c in server.clients]
+        max_util = 0.0
+        for seed in (pbar := trange(30)):
+            rng = np.random.default_rng(seed)
+            server = Server(
+                nclients=3, lamb=0.1, lrs=lambda: LearningRateSchedule(0.1), T=T, algorithm=algorithm, rng=rng
             )
-        )
-        allocations[algorithm] = [[round_down(c.p)[i] for c in server.clients] for i in range(2)]
+            for _ in range(epochs):
+                utility_val = server.step()
+            if utility_val > max_util:
+                max_util = utility_val
+                allocations[algorithm] = [[round_down(c.p)[i] for c in server.clients] for i in range(2)]
+            pbar.set_postfix_str(f"UTIL: {utility_val:.5f}, MAX UTIL: {max_util:.5f}")
+        print(f"Final allocation: {[f'{p=}, t_i(p)={c.time(p):.5f}' for c, p in zip(server.clients, zip(*allocations[algorithm]))]}")
 
     print("Calculating allocation for FedDrop")
     fcn_times = jnp.array([
@@ -188,6 +187,7 @@ if __name__ == "__main__":
         laptop_time(conv_time)(jnp.array([1.0, 1.0])),
     ])
     pw = round_down(jnp.minimum(1.0, jnp.sqrt((T - conv_times) / fcn_times)))
+    # pw = round_down(jnp.minimum(1.0, jnp.sqrt(T / fcn_times)))
     print(f"Found allocation p={pw}")
     allocations['feddrop'] = [pw, [1.0, 1.0, 1.0]]
 
