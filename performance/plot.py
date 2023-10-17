@@ -3,6 +3,7 @@ import re
 import json
 import matplotlib.pyplot as plt
 import numpy as np
+import jax
 
 
 def create_plot(plot_data, save_filename):
@@ -24,9 +25,10 @@ def create_plot(plot_data, save_filename):
 
 
 if __name__ == "__main__":
-    # TODO: Generate the data by the average of 5 experiments
-    plot_data_fns = [fn for fn in os.listdir("results") if re.search("dataset=mnist.*seed=\d.*allocation=sim.*framework=(pdhfl|feddrop|heterofl|fjord)", fn)]
-    print(plot_data_fns)
-    for plot_data_fn in plot_data_fns:
-        with open(f"results/{plot_data_fn}", "r") as f:
-            create_plot(json.load(f), plot_data_fn[re.search("framework=", plot_data_fn).end():re.search("framework=[a-z]+_", plot_data_fn).end() - 1] + ".png")
+    for framework in ["pdhfl", "feddrop", "heterofl", "fjord"]:
+        plot_data_fns = [fn for fn in os.listdir("results") if re.search(f"dataset=mnist.*seed=\d.*allocation=cyclic.*framework={framework}", fn)]
+        plot_data_collection = []
+        for plot_data_fn in plot_data_fns:
+            with open(f"results/{plot_data_fn}", "r") as f:
+                plot_data_collection.append(json.load(f))
+        create_plot(jax.tree_util.tree_map(lambda *x: sum(x) / len(x), *plot_data_collection), f"{framework}.png")

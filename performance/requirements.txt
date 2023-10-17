@@ -9,3 +9,4 @@ jaxopt
 Pillow
 matplotlib
 rarfile
+Jinja2
