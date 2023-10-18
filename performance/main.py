@@ -263,7 +263,7 @@ if __name__ == "__main__":
             if r % args.eval_every == 0 or r == (args.rounds - 1):
                 running_analytics.append(server.analytics())
                 running_evaluations.append(server.evaluate())
-                tqdm.write(f"Round {r} Accuracy: {running_evaluations[-1]:.3%}")
+                tqdm.write(f"Round {r} Accuracy: {running_evaluations[-1]:.3%}, Loss: {loss:.5f}")
         results = {"analytics": running_analytics, "evaluation": running_evaluations}
 
     print(f"Results: analytics={results['analytics'][-1]}, evaluation={results['evaluation'][-1]}")
