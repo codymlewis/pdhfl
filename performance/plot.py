@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import json
@@ -27,8 +28,12 @@ def create_plot(plot_data, save_filename):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Create plots from the experiments results.")
+    parser.add_argument("-a", "--allocation", type=str, default="cyclic", help="The allocation type to look at the results from.")
+    args = parser.parse_args()
+
     for framework in ["pdhfl", "feddrop", "heterofl", "fjord"]:
-        plot_data_fns = [fn for fn in os.listdir("results") if re.search(f"dataset=mnist.*seed=\d.*allocation=cyclic.*framework={framework}", fn)]
+        plot_data_fns = [fn for fn in os.listdir("results") if re.search(f"dataset=mnist.*seed=\d.*allocation={args.allocation}.*framework={framework}", fn)]
         plot_data_collection = []
         for plot_data_fn in plot_data_fns:
             with open(f"results/{plot_data_fn}", "r") as f:
