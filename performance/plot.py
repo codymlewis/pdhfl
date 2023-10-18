@@ -10,10 +10,12 @@ def create_plot(plot_data, save_filename):
     analytics = {k: np.array([pd[k] for pd in plot_data['analytics']]) for k in plot_data['analytics'][0].keys()}
     evaluations = np.array(plot_data['evaluation'])
     rounds = np.arange(len(evaluations)) + 1
-    plt.plot(rounds, analytics['mean'], label="Local", marker='s', markevery=5)
-    plt.fill_between(rounds, analytics['min'], analytics['max'], alpha=0.2)
+    if "feddrop" not in save_filename:
+        plt.plot(rounds, analytics['mean'], label="Local", marker='s', color="#1f77b4", markevery=5)
+        plt.fill_between(rounds, analytics['min'], analytics['max'], alpha=0.2)
     if "pdhfl" not in save_filename:
-        plt.plot(rounds, evaluations, label="Global", marker='^', markevery=5)
+        plt.plot(rounds, evaluations, label="Global", marker='^', color="#ff7f0e", markevery=5)
+    if "feddrop" not in save_filename and "pdhfl" not in save_filename:
         plt.legend(title="Model", loc='lower right')
     plt.ylim(-0.1, 1.1)
     plt.ylabel("Top-1 Accuracy")
