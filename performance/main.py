@@ -190,7 +190,9 @@ if __name__ == "__main__":
             "cyclic": ([0.3, 0.5, 1.0], [0.3, 0.5, 1.0] if args.framework not in ["fjord", "feddrop"] else [1.0, 1.0, 1.0]),
         }[args.allocation]
 
-    if args.dataset in ["cifar10", "cifar100"]:
+    if args.dataset == "cifar10":
+        create_model_fn = functools.partial(fl.neural_networks.CNN, dataset.nclasses)
+    elif args.dataset == "cifar100":
         create_model_fn = functools.partial(fl.neural_networks.CNN, dataset.nclasses)
     elif args.dataset == "tinyimagenet":
         create_model_fn = functools.partial(fl.neural_networks.DenseNet121, dataset.nclasses)

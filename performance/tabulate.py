@@ -44,7 +44,7 @@ if __name__ == "__main__":
     all_data = {d: {f: [] for f in frameworks} for d in datasets}
     for dataset in datasets:
         for framework in frameworks:
-            for result_data_fn in filter(lambda fn: dataset in fn and framework in fn and args.allocation in fn, result_data_fns):
+            for result_data_fn in filter(lambda fn: dataset + "_" in fn and framework in fn and args.allocation in fn, result_data_fns):
                 with open(f"results/{result_data_fn}", 'r') as f:
                     all_data[dataset][framework].append(json.load(f))
             if len(all_data[dataset][framework]):
