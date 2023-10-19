@@ -193,7 +193,7 @@ if __name__ == "__main__":
     if args.dataset == "cifar10":
         create_model_fn = functools.partial(fl.neural_networks.CNN, dataset.nclasses)
     elif args.dataset == "cifar100":
-        create_model_fn = functools.partial(fl.neural_networks.CNN, dataset.nclasses)
+        create_model_fn = functools.partial(fl.neural_networks.DenseNet121, dataset.nclasses)
     elif args.dataset == "tinyimagenet":
         create_model_fn = functools.partial(fl.neural_networks.DenseNet121, dataset.nclasses)
     else:
