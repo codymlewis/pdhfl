@@ -47,15 +47,16 @@ class FedDrop(Client):
 
     def step(self, parameters):
         parameters = feddrop(parameters, self.p, self.rng)
+        print(jax.tree_util.tree_map(lambda x: np.prod(jnp.shape(x)), parameters))
+        print(f"p = {self.p}")
+        print(jax.tree_util.tree_map(lambda x: jnp.sum(x == 0), parameters))
         return super().step(parameters)
 
 
-def feddrop(params, pmin, rng):
+def feddrop(params, p, rng, parent_k=None):
     return {
-        k: {
-            dk: (rng.uniform(size=dp.shape[1]) < pmin) * dp if dk == "kernel" and "dense" in k.lower() else dp for dk, dp in d.items()
-        }
-        for k, d in params.items()
+        k: feddrop(v, p, rng, k) if isinstance(v, dict) else (rng.uniform(size=v.shape[-1]) < p) * v if (parent_k and "dense" in parent_k.lower() and k in ["kernel", "bias"]) else v
+        for k, v in params.items()
     }
 
     
