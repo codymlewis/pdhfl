@@ -12,7 +12,7 @@ for framework in ${frameworks[@]}; do
         else
             allocations=("cyclic" "sim")
         fi
-        [[ $dataset == "nbaiot" ]] && rounds=10 || rounds=50
+        [[ $dataset == "nbaiot" ]] && rounds=10 || [[ $dataset == "cifar100" ]] && rounds=100 || rounds=50
 
         for allocation in ${allocations[@]}; do
             for seed in {1..5}; do

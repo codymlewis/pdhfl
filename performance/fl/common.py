@@ -22,7 +22,7 @@ def partition(parameters, global_parameters):
 
 def expand(parameters, global_parameters):
     return {
-        k: expand(parameters.get(k), v) if isinstance(v, dict) else (
+        k: expand(parameters.get(k) if parameters else None, v) if isinstance(v, dict) else (
             jnp.pad(parameters[k], tuple((0, gs - ps) for ps, gs in zip(parameters[k].shape, v.shape))) if parameters else jnp.zeros_like(v, dtype=v.dtype)
         )
         for k, v in global_parameters.items()

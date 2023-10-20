@@ -53,7 +53,6 @@ class CNN(nn.Module):
 
 
 # DenseNet based architecture
-# TODO: Test with TinyImageNet, see performance w/ group norm
 
 class ConvBlock(nn.Module):
     growth_rate: int
@@ -63,12 +62,12 @@ class ConvBlock(nn.Module):
     @nn.compact
     def __call__(self, x, train=True):
         # x1 = nn.BatchNorm(axis=3, epsilon=1.001e-5, name=self.name + '_0_bn', use_running_average=not train)(x)
-        x1 = nn.GroupNorm(32, epsilon=1.001e-5, use_bias=False, name=self.name + '_0_gn')(x)
+        x1 = nn.LayerNorm(epsilon=1.001e-5, use_bias=False, name=self.name + '_0_ln')(x)
         x1 = nn.relu(x1)
         x1 = nn.Conv(4 * self.growth_rate, (1, 1), padding='VALID', use_bias=False, name=self.name + '_1_conv')(x1)
         x1 *= self.scale
         # x1 = nn.BatchNorm(axis=3, epsilon=1.001e-5, name=self.name + '_1_bn', use_running_average=not train)(x1)
-        x1 = nn.GroupNorm(32, epsilon=1.001e-5, use_bias=False, name=self.name + '_1_gn')(x1)
+        x1 = nn.LayerNorm(epsilon=1.001e-5, use_bias=False, name=self.name + '_1_ln')(x1)
         x1 = nn.relu(x1)
         x1 = nn.Conv(self.growth_rate, (3, 3), padding='SAME', use_bias=False, name=self.name + '_2_conv')(x1)
         x1 *= self.scale
@@ -84,7 +83,7 @@ class TransitionBlock(nn.Module):
     @nn.compact
     def __call__(self, x, train=True):
         # x = nn.BatchNorm(axis=3, epsilon=1.001e-5, name=self.name + '_bn', use_running_average=not train)(x)
-        x = nn.GroupNorm(32, epsilon=1.001e-5, use_bias=False, name=self.name + '_gn')(x)
+        x = nn.LayerNorm(epsilon=1.001e-5, use_bias=False, name=self.name + '_ln')(x)
         x = nn.relu(x)
         x = nn.Conv(int(x.shape[3] * self.reduction), (1, 1), padding='VALID', use_bias=False, name=self.name + '_conv')(x)
         x *= self.scale
@@ -118,7 +117,7 @@ class DenseNet121(nn.Module):
         x = nn.Conv(64, (7, 7), (2, 2), padding='VALID', use_bias=False, name="conv1/conv")(x)
         x *= self.scale
         # x = nn.BatchNorm(axis=3, epsilon=1.001e-5, name='conv1/bn', use_running_average=not train)(x)
-        x = nn.GroupNorm(32, epsilon=1.001e-5, use_bias=False, name="conv1/gn")(x)
+        x = nn.LayerNorm(epsilon=1.001e-5, use_bias=False, name="conv1/ln")(x)
         x = nn.relu(x)
         x = jnp.pad(x, ((0, 0), (1, 1), (1, 1), (0, 0)))
         x = nn.max_pool(x, (3, 3), (2, 2))
@@ -130,7 +129,7 @@ class DenseNet121(nn.Module):
         x = TransitionBlock(0.5, name="pool4", scale=self.scale)(x, train)
         x = DenseBlock(16, self.pw, self.pd, scale=self.scale, name="conv5")(x, train)
         # x = nn.BatchNorm(axis=3, epsilon=1.001e-5, name="bn", use_running_average=not train)(x)
-        x = nn.GroupNorm(32, epsilon=1.001e-5, use_bias=False, name="gn")(x)
+        x = nn.LayerNorm(epsilon=1.001e-5, use_bias=False, name="ln")(x)
         x = nn.relu(x)
         x = einops.reduce(x, "b w h d -> b d", "mean")  # Global average pooling
         x = nn.Dense(self.classes, name="predictions")(x)
