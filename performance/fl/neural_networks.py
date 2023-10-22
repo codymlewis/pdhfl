@@ -169,9 +169,9 @@ class ConvNeXt(nn.Module):
         num_convnext_blocks = 4
         for i in range(num_convnext_blocks):
             x = downsample_layers[i](x)
-            for j in range(depths[i]):
+            for j in range(round(depths[i] * self.pd)):
                 x = ConvNeXtBlock(
-                    projection_dim=projection_dims[i],
+                    projection_dim=round(projection_dims[i] * self.pw),
                     layer_scale_init_value=1e-6,
                     name=f"convnext_base_stage_{i}_block_{j}",
                 )(x)
