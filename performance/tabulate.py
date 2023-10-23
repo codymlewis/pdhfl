@@ -30,6 +30,16 @@ def format_final_table(styler):
     styler = styler.format(formatter=formatter)
     return styler
 
+def file_filter(fn, args):
+    conditionals = []
+    conditionals.append(f"rounds={args.rounds}_" in fn)
+    conditionals.append(f"clients={args.clients}_" in fn)
+    conditionals.append(f"proportion_clients={args.proportion_clients}" in fn)
+    conditionals.append(re.match(r".*seed=\d_", fn) is not None)
+    print(fn)
+    print(conditionals)
+    return np.all(conditionals)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a LaTeX table from the experiments results.")
@@ -39,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument("-pc", "--proportion-clients", type=float, default=1.0, help="The proportion of clients experiment type to look at the results from.")
     args = parser.parse_args()
 
-    result_data_fns = [fn for fn in os.listdir("results/") if f"rounds={args.rounds}" in fn and f"clients={args.clients}" in fn and f"proportion_clients={args.proportion_clients}" in fn]
+    result_data_fns = [fn for fn in os.listdir("results/") if file_filter(fn, args)]
     datasets = set(fn[re.search('dataset=', fn).end():re.search('dataset=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns)
     frameworks = set(fn[re.search('framework=', fn).end():re.search('framework=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns)
     allocations = set(fn[re.search('allocation=', fn).end():re.search('allocation=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns)

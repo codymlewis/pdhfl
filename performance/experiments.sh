@@ -16,24 +16,26 @@ for framework in ${frameworks[@]}; do
         if [[ $dataset == "nbaiot" ]]; then
             rounds=10
             batch_size=128
+            clients_list=(0 90)
         elif [[ $dataset == "cifar100" ]]; then
             rounds=100
             batch_size=32
+            clients_list=(10)
         else
             rounds=50
             batch_size=128
+            clients_list=(0)
         fi
 
         for allocation in ${allocations[@]}; do
-            for seed in {1..5}; do
-                python main.py --rounds $rounds --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size $batch_size
+            for clients in ${clients[@]}; do
+                for seed in {1..5}; do
+                    python main.py --rounds $rounds --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size $batch_size --clients $clients
 
-                if [[ $dataset == "nbaiot" ]]; then
-                    python main.py --rounds $rounds --clients 90 --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size $batch_size
-                    python main.py --rounds $rounds --clients 90 --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size $batch_size --proportion-clients 0.1
-                elif [[ $dataset == "cifar100" ]]; then
-                    python main.py --rounds $rounds --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size $batch_size --proportion-clients 0.1
-                fi
+                    if [[ $clients -ge 90 ]]; then
+                        python main.py --rounds $rounds --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size $batch_size --proportion-clients 0.1 --clients $clients
+                    fi
+                done
             done
         done
     done
