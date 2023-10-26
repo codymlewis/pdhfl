@@ -32,7 +32,7 @@ for framework in ${frameworks[@]}; do
         fi
 
         for allocation in ${allocations[@]}; do
-            for clients in ${clients[@]}; do
+            for clients in ${clients_list[@]}; do
                 for seed in {1..5}; do
                     python main.py --rounds $rounds --dataset $dataset --framework $framework --seed $seed --allocation $allocation --batch-size $batch_size --clients $clients
 

@@ -36,8 +36,6 @@ def file_filter(fn, args):
     conditionals.append(f"clients={args.clients}_" in fn)
     conditionals.append(f"proportion_clients={args.proportion_clients}" in fn)
     conditionals.append(re.match(r".*seed=\d_", fn) is not None)
-    print(fn)
-    print(conditionals)
     return np.all(conditionals)
 
 
@@ -63,15 +61,17 @@ if __name__ == "__main__":
             if len(all_data[dataset][framework]):
                 all_data[dataset][framework] = jax.tree_util.tree_map(lambda *x: sum(x) / len(x), *all_data[dataset][framework])
 
-    full_results = {"Dataset": [], "Algorithm": [], "Client Mean (STD)": [], "Global": []}
+    full_results = {"Dataset": [], "Algorithm": [], "Client Mean": [], "Client Range": [], "Global": []}
     for dataset in datasets:
         for framework in frameworks:
             if all_data[dataset][framework]:
                 full_results['Dataset'].append(dataset)
                 full_results['Algorithm'].append(framework)
-                full_results['Client Mean (STD)'].append(
-                    f"{all_data[dataset][framework]['analytics'][-1]['mean']:.3%} ({all_data[dataset][framework]['analytics'][-1]['std']:.3%})"
-                )
+                full_results['Client Mean'].append(f"{all_data[dataset][framework]['analytics'][-1]['mean']:.3%}")
+                full_results['Client Range'].append("[{:.3%}, {:.3%}]".format(
+                    all_data[dataset][framework]['analytics'][-1]['min'],
+                    all_data[dataset][framework]['analytics'][-1]['max'],
+                ))
                 full_results['Global'].append(f"{all_data[dataset][framework]['evaluation'][-1]:.3%}")
     full_results = pd.DataFrame(full_results)
     full_results = full_results.sort_values(by=["Dataset", "Algorithm"])
