@@ -85,7 +85,7 @@ def fedavg_compute(summed_grads, total_samples):
 
 
 def fedsum_inc(summed_grads, client_parameters, aux, client_samples):
-    summed_grads = common.pytree_add(summed_grads, common.pytree_scale(client_parameters, client_samples))
+    summed_grads = common.pytree_add(summed_grads, client_parameters)
     return summed_grads, aux
 
 

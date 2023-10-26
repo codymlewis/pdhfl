@@ -2,7 +2,7 @@
 
 
 frameworks=("pdhfl" "heterofl" "fjord" "feddrop" "local" "fedavg")
-datasets=("mnist" "har" "nbaiot" "cifar10" "cifar100")
+datasets=("mnist" "har" "nbaiot" "cifar10" "cifar100" "tinyimagenet")
 
 
 for framework in ${frameworks[@]}; do
@@ -20,6 +20,10 @@ for framework in ${frameworks[@]}; do
         elif [[ $dataset == "cifar100" ]]; then
             rounds=100
             batch_size=32
+            clients_list=(10)
+        elif [[ $dataset == "tinyimagenet" ]]; then
+            rounds=50
+            batch_size=8
             clients_list=(10)
         else
             rounds=50
