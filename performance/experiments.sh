@@ -22,8 +22,8 @@ for framework in ${frameworks[@]}; do
             batch_size=32
             clients_list=(10)
         elif [[ $dataset == "tinyimagenet" ]]; then
-            rounds=50
-            batch_size=8
+            rounds=100
+            batch_size=32
             clients_list=(10)
         else
             rounds=50
