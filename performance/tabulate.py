@@ -61,13 +61,16 @@ if __name__ == "__main__":
             if len(all_data[dataset][framework]):
                 all_data[dataset][framework] = jax.tree_util.tree_map(lambda *x: sum(x) / len(x), *all_data[dataset][framework])
 
-    full_results = {"Dataset": [], "Algorithm": [], "Client Mean": [], "Client Range": [], "Global": []}
+    full_results = {"Dataset": [], "Algorithm": [], "Client Mean (STD)": [], "Client Range": [], "Global": []}
     for dataset in datasets:
         for framework in frameworks:
             if all_data[dataset][framework]:
                 full_results['Dataset'].append(dataset)
                 full_results['Algorithm'].append(framework)
-                full_results['Client Mean'].append(f"{all_data[dataset][framework]['analytics'][-1]['mean']:.3%}")
+                full_results['Client Mean (STD)'].append("{:.3%} ({:.3%})".format(
+                    all_data[dataset][framework]['analytics'][-1]['mean'],
+                    all_data[dataset][framework]['analytics'][-1]['std'],
+                ))
                 full_results['Client Range'].append("[{:.3%}, {:.3%}]".format(
                     all_data[dataset][framework]['analytics'][-1]['min'],
                     all_data[dataset][framework]['analytics'][-1]['max'],
