@@ -1,17 +1,14 @@
 import argparse
 import time
-from typing import Dict, Tuple
+from typing import Tuple
 import functools
 import itertools
 import math
 import os
-import logging
 import json
 import numpy as np
 from numpy.typing import NDArray
 import einops
-import sklearn.preprocessing as skp
-import sklearn.model_selection as skms
 from tqdm import tqdm, trange
 import datasets
 
@@ -78,11 +75,16 @@ def cifar100() -> data_manager.Dataset:
 
 def tinyimagenet():
     ds = datasets.load_dataset("zh-plus/tiny-imagenet")
+
+    def map_fn(e):
+        img = np.array(e['image'], dtype=np.float32) / 255
+        return {
+            "X": einops.repeat(img, "h w -> h w 3") if len(img.shape) == 2 else img,
+            "Y": e['label']
+        }
+
     ds = ds.map(
-        lambda e: {
-            'X': einops.repeat(img, "h w -> h w 3") if len((img := np.array(e['image'], dtype=np.float32) / 255).shape) == 2 else img,
-            'Y': e['label']
-        },
+        map_fn,
         remove_columns=['image', 'label']
     )
     features = ds['train'].features
@@ -148,18 +150,23 @@ def client_ids_to_idx(ids):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Perform experiments evaluating the performance for device heterogeneous FL.")
+    parser = argparse.ArgumentParser(
+            description="Perform experiments evaluating the performance for device heterogeneous FL.")
     parser.add_argument("-d", "--dataset", type=str, default="mnist", help="Dataset to train on.")
     parser.add_argument("-c", "--clients", type=int, default=0, help="Number of clients in the FL system.")
     parser.add_argument("-s", "--seed", type=int, default=42, help="Seed for the experiment.")
     parser.add_argument("-r", "--rounds", type=int, default=10, help="Number of rounds to train for.")
     parser.add_argument("--eval-every", type=int, default=1, help="Number of rounds between evaluations.")
-    parser.add_argument("-e", "--epochs", type=int, default=1, help="Number of epochs that the clients should train for each round.")
-    parser.add_argument("-spe", "--steps-per-epoch", type=int, default=None, help="Number of steps of training to perform each epoch (default: a full pass through the dataset).")
+    parser.add_argument("-e", "--epochs", type=int, default=1,
+                        help="Number of epochs that the clients should train for each round.")
+    parser.add_argument("-spe", "--steps-per-epoch", type=int, default=None,
+                        help="Number of steps of training to perform each epoch (default: a full pass through the dataset).")
     parser.add_argument("-b", "--batch-size", type=int, default=32, help="Minibatch size of the clients.")
-    parser.add_argument("-a", "--allocation", type=str, default="full", help="Type of model allocation scheme to follow (can be one of full|cyclic|sim).")
+    parser.add_argument("-a", "--allocation", type=str, default="full",
+                        help="Type of model allocation scheme to follow (can be one of full|cyclic|sim).")
     parser.add_argument("-f", "--framework", type=str, default="fedavg", help="Federated learning framework to follow")
-    parser.add_argument("-psc", "--proportion-clients", type=float, default=1.0, help="Proportion of clients that the server selects for training in each round.")
+    parser.add_argument("-psc", "--proportion-clients", type=float, default=1.0,
+                        help="Proportion of clients that the server selects for training in each round.")
     args = parser.parse_args()
     print(f"Starting experiment with config: {args.__dict__}")
 
@@ -170,7 +177,8 @@ if __name__ == "__main__":
         dataset, client_ids = dataset
         client_idx = client_ids_to_idx(client_ids)
         if len(client_idx) < args.clients:
-            # Note: This only works when the number of clients modulo len(client_idx) is 0, not a problem for these experiments though
+            # Note: This only works when the number of clients modulo len(client_idx) is 0,
+            #       not a problem for these experiments though
             nsplits = args.clients // len(client_idx)
             new_client_idx = []
             for cidx in client_idx:
@@ -190,7 +198,7 @@ if __name__ == "__main__":
             "cyclic": ([0.3, 0.5, 1.0], [0.3, 0.5, 1.0] if args.framework not in ["fjord", "feddrop"] else [1.0, 1.0, 1.0]),
         }[args.allocation]
 
-    if args.dataset == "cifar10":
+    if args.dataset == "cifar10" or (args.framework == "feddrop" and args.dataset in ["cifar100", "tinyimagenet"]):
         create_model_fn = functools.partial(fl.neural_networks.CNN, dataset.nclasses)
     elif args.dataset in ["cifar100", "tinyimagenet"]:
         create_model_fn = functools.partial(fl.neural_networks.DenseNet121, dataset.nclasses)
@@ -243,7 +251,12 @@ if __name__ == "__main__":
             pbar.set_postfix_str(f"Loss: {loss:.3f}, ACC: {client_analytics[-1]:.3%}")
             del client
         results = {
-            "analytics": [{"mean": np.mean(client_analytics), "std": np.std(client_analytics), "min": np.min(client_analytics), "max": np.max(client_analytics)}],
+            "analytics": [{
+                "mean": np.mean(client_analytics),
+                "std": np.std(client_analytics),
+                "min": np.min(client_analytics),
+                "max": np.max(client_analytics)
+            }],
             "evaluation": [0.0],
         }
     else:

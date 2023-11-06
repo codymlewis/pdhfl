@@ -46,7 +46,11 @@ def round_limiter(time, T):
     """
     @jax.jit
     def _apply(p):
-        return jnp.where(time(p) > T, 0.1 * jsp.stats.norm.pdf(time(p), loc=T, scale=0.5), jsp.stats.norm.pdf(time(p), loc=T, scale=0.5))
+        return jnp.where(
+            time(p) > T,
+            0.1 * jsp.stats.norm.pdf(time(p), loc=T, scale=0.5),
+            jsp.stats.norm.pdf(time(p), loc=T, scale=0.5)
+        )
     return _apply
 
 
@@ -173,7 +177,9 @@ if __name__ == "__main__":
                 max_util = utility_val
                 allocations[algorithm] = [[round_down(c.p)[i] for c in server.clients] for i in range(2)]
             pbar.set_postfix_str(f"UTIL: {utility_val:.5f}, MAX UTIL: {max_util:.5f}")
-        print(f"Final allocation: {[f'{p=}, t_i(p)={c.time(p):.5f}' for c, p in zip(server.clients, zip(*allocations[algorithm]))]}")
+        print("Final allocation: {}".format(
+            [f'{p=}, t_i(p)={c.time(p):.5f}' for c, p in zip(server.clients, zip(*allocations[algorithm]))]
+        ))
 
     print("Calculating allocation for FedDrop")
     fcn_times = jnp.array([

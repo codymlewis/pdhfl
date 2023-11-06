@@ -2,7 +2,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from . import model
 from . import common
 
 
@@ -24,7 +23,7 @@ class Client:
             batch_size=self.batch_size,
             epochs=self.epochs,
             steps_per_epoch=self.steps_per_epoch,
-            return_grads = True,
+            return_grads=True,
         )
         return loss, common.expand(grads, parameters), len(self.data['train']['Y'])
 
@@ -54,12 +53,15 @@ class FedDrop(Client):
 
 
 def feddrop(params, p, rng, parent_k=None):
+    dense_parent = parent_k is not None and "dense" in parent_k.lower()
     return {
-        k: feddrop(v, p, rng, k) if isinstance(v, dict) else (rng.uniform(size=v.shape[-1]) < p) * v if (parent_k and "dense" in parent_k.lower() and k in ["kernel", "bias"]) else v
+        k: feddrop(v, p, rng, k) if isinstance(v, dict)
+        else (rng.uniform(size=v.shape[-1]) < p) * v if (dense_parent and k in ["kernel", "bias"])
+        else v
         for k, v in params.items()
     }
 
-    
+
 class Local(Client):
     def step(self, parameters):
         loss, parameters = self.model.fit(

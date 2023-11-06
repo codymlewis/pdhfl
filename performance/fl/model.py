@@ -9,7 +9,6 @@ from tqdm import tqdm
 import sklearn.metrics as skm
 
 from . import common
-from . import neural_networks
 
 
 @functools.cache
