@@ -14,9 +14,9 @@ def create_plot(plot_data, save_filename):
     if "feddrop" not in save_filename:
         plt.plot(rounds, analytics['mean'], label="Local", marker='s', color="#1f77b4", markevery=5)
         plt.fill_between(rounds, analytics['min'], analytics['max'], alpha=0.2)
-    if "pdhfl" not in save_filename:
+    if "ppdhfl" not in save_filename:
         plt.plot(rounds, evaluations, label="Global", marker='^', color="#ff7f0e", markevery=5)
-    if "feddrop" not in save_filename and "pdhfl" not in save_filename:
+    if "feddrop" not in save_filename and "ppdhfl" not in save_filename:
         plt.legend(title="Model", loc='lower right')
     plt.ylim(-0.1, 1.1)
     plt.ylabel("Top-1 Accuracy")
@@ -29,11 +29,15 @@ def create_plot(plot_data, save_filename):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create plots from the experiments results.")
-    parser.add_argument("-a", "--allocation", type=str, default="cyclic", help="The allocation type to look at the results from.")
+    parser.add_argument("-a", "--allocation", type=str, default="cyclic",
+                        help="The allocation type to look at the results from.")
     args = parser.parse_args()
 
-    for framework in ["pdhfl", "feddrop", "heterofl", "fjord"]:
-        plot_data_fns = [fn for fn in os.listdir("results") if re.search(f"dataset=mnist.*seed=\d.*allocation={args.allocation}.*framework={framework}", fn)]
+    for framework in ["ppdhfl", "feddrop", "heterofl", "fjord"]:
+        plot_data_fns = [
+            fn for fn in os.listdir("results")
+            if re.search(f"dataset=mnist.*seed=\\d.*allocation={args.allocation}.*framework={framework}", fn)
+        ]
         plot_data_collection = []
         for plot_data_fn in plot_data_fns:
             with open(f"results/{plot_data_fn}", "r") as f:

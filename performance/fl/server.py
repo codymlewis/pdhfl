@@ -1,10 +1,10 @@
-import functools
 import gc
 import numpy as np
 import jax
 import jax.numpy as jnp
 
 from . import common
+
 
 class Server:
     def __init__(self, model, clients, test_data, aggregator="fedavg", C=1.0, seed=42):
@@ -21,14 +21,14 @@ class Server:
             case ["fedavg", "feddrop"]:
                 self.aggregate_inc = fedavg_inc
                 self.aggregate_compute = fedavg_compute
-            case ["fedsum", "pdhfl"]:
+            case ["fedsum", "ppdhfl"]:
                 self.aggregate_inc = fedsum_inc
                 self.aggregate_compute = fedsum_compute
             case _:
                 self.aggregate_inc = fed_sparse_avg_inc
                 self.aggregate_compute = fed_sparse_avg_compute
 
-        if aggregator == "pdhfl":
+        if aggregator == "ppdhfl":
             self.round = 0
             self.eta_0 = 1.0
 
@@ -39,7 +39,7 @@ class Server:
             clients = self.clients
 
         global_parameters = self.model.get_parameters()
-        client_losses, client_grads, client_samples = [], [], []
+        client_losses, client_samples = [], []
         summed_grads = jax.tree_util.tree_map(lambda x: jnp.zeros_like(x), self.model.parameters['params'])
         aux = None
         for c in clients:
@@ -49,7 +49,7 @@ class Server:
             summed_grads, aux = self.aggregate_inc(summed_grads, grads, aux, num_samples)
             gc.collect()
         summed_grads = self.aggregate_compute(summed_grads, aux)
-        if self.aggregator == "pdhfl":  # In the practical algorithm, the client does this. This just saves on computation
+        if self.aggregator == "ppdhfl":  # In the practical algorithm, the client does this. This just saves on computation
             eta = max(self.eta_0 / (1 + 0.0001 * self.round), 0.0001)
             norm = common.pytree_norm(summed_grads)
             summed_grads = common.pytree_scale(summed_grads, min(eta / norm, 1))

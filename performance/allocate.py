@@ -55,7 +55,7 @@ def round_limiter(time, T):
 
 
 @jax.jit
-def pdhfl_time(p):
+def ppdhfl_time(p):
     return p[1] * 0.14 * (1 + 0.2 * p[0])
 
 
@@ -109,7 +109,7 @@ class Client:
             Device.BIG.value: bigcom_time,
             Device.LITTLE.value: littlecom_time,
             Device.LAPTOP.value: laptop_time
-        }[i]({"pdhfl": pdhfl_time, "fjord": fjord_time, "heterofl": heterofl_time}[algorithm])
+        }[i]({"ppdhfl": ppdhfl_time, "fjord": fjord_time, "heterofl": heterofl_time}[algorithm])
         self.u = utility(lamb, round_limiter(self.time, T))
         self.lrs = lrs
         self.t = 0
@@ -130,7 +130,7 @@ class Client:
 class Server:
     "A server that co-ordinates the FL process"
 
-    def __init__(self, nclients, lamb, lrs, T, algorithm="pdhfl", rng=np.random.default_rng()):
+    def __init__(self, nclients, lamb, lrs, T, algorithm="ppdhfl", rng=np.random.default_rng()):
         self.clients = [Client(i % 3, lamb, lrs(), T, algorithm, rng) for i in range(nclients)]
 
     def step(self):
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     # p = [p_w, p_d]
     T = 1/3
     epochs = 300
-    for algorithm in ["pdhfl", "fjord", "heterofl"]:
+    for algorithm in ["ppdhfl", "fjord", "heterofl"]:
         print(f"Optimizing allocations for {algorithm}")
         max_util = 0.0
         for seed in (pbar := trange(30)):

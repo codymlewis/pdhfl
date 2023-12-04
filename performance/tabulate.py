@@ -15,7 +15,7 @@ def formatter(cell_value):
     cell_value = cell_value.replace('fjord', 'FjORD')
     cell_value = cell_value.replace('heterofl', 'HeteroFL')
     cell_value = cell_value.replace('local', 'Local')
-    cell_value = cell_value.replace('pdhfl', 'PDHFL')
+    cell_value = cell_value.replace('ppdhfl', 'PDHFL')
     # Format datasets
     cell_value = cell_value.replace('cifar', 'CIFAR-')
     cell_value = cell_value.replace('mnist', 'MNIST')
@@ -30,6 +30,7 @@ def format_final_table(styler):
     styler = styler.format(formatter=formatter)
     return styler
 
+
 def file_filter(fn, args):
     conditionals = []
     conditionals.append(f"rounds={args.rounds}_" in fn)
@@ -41,16 +42,24 @@ def file_filter(fn, args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a LaTeX table from the experiments results.")
-    parser.add_argument("-a", "--allocation", type=str, default="cyclic", help="The allocation type to look at the results from.")
+    parser.add_argument("-a", "--allocation", type=str, default="cyclic",
+                        help="The allocation type to look at the results from.")
     parser.add_argument("-r", "--rounds", type=int, default=50, help="The number of rounds filter option.")
     parser.add_argument("-c", "--clients", type=int, default=0, help="The number of clients filter option.")
-    parser.add_argument("-pc", "--proportion-clients", type=float, default=1.0, help="The proportion of clients experiment type to look at the results from.")
+    parser.add_argument("-pc", "--proportion-clients", type=float, default=1.0,
+                        help="The proportion of clients experiment type to look at the results from.")
     args = parser.parse_args()
 
     result_data_fns = [fn for fn in os.listdir("results/") if file_filter(fn, args)]
-    datasets = set(fn[re.search('dataset=', fn).end():re.search('dataset=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns)
-    frameworks = set(fn[re.search('framework=', fn).end():re.search('framework=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns)
-    allocations = set(fn[re.search('allocation=', fn).end():re.search('allocation=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns)
+    datasets = set(
+        fn[re.search('dataset=', fn).end():re.search('dataset=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns
+    )
+    frameworks = set(
+        fn[re.search('framework=', fn).end():re.search('framework=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns
+    )
+    allocations = set(
+        fn[re.search('allocation=', fn).end():re.search('allocation=[a-z0-9]+_', fn).end() - 1] for fn in result_data_fns
+    )
 
     all_data = {d: {f: [] for f in frameworks} for d in datasets}
     for dataset in datasets:
@@ -59,7 +68,9 @@ if __name__ == "__main__":
                 with open(f"results/{result_data_fn}", 'r') as f:
                     all_data[dataset][framework].append(json.load(f))
             if len(all_data[dataset][framework]):
-                all_data[dataset][framework] = jax.tree_util.tree_map(lambda *x: sum(x) / len(x), *all_data[dataset][framework])
+                all_data[dataset][framework] = jax.tree_util.tree_map(
+                    lambda *x: sum(x) / len(x), *all_data[dataset][framework]
+                )
 
     full_results = {"Dataset": [], "Algorithm": [], "Client Mean (STD)": [], "Client Range": [], "Global": []}
     for dataset in datasets:
