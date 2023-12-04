@@ -1,4 +1,4 @@
-# Ensuring Gradient Privacy in Personalized Heterogeneous Federated Learning Environment
+# Ensuring Gradient Privacy in Personalized Device Heterogeneous Federated Learning Environment
 
 A collection of experiments focused on unifying gradient privacy and device heterogeneity in federated learning.
 
