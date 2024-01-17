@@ -36,6 +36,7 @@ def file_filter(fn, args):
     conditionals.append(f"rounds={args.rounds}_" in fn)
     conditionals.append(f"clients={args.clients}_" in fn)
     conditionals.append(f"proportion_clients={args.proportion_clients}" in fn)
+    conditionals.append(f"quantisation={args.quantisation}" in fn)
     conditionals.append(re.match(r".*seed=\d_", fn) is not None)
     return np.all(conditionals)
 
@@ -48,6 +49,8 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--clients", type=int, default=0, help="The number of clients filter option.")
     parser.add_argument("-pc", "--proportion-clients", type=float, default=1.0,
                         help="The proportion of clients experiment type to look at the results from.")
+    parser.add_argument("-q", "--quantisation", action="store_true",
+                        help="Whether to veiw SecAgg quantisation (applicable to FedAVG and PPDHFL algorithms only)")
     args = parser.parse_args()
 
     result_data_fns = [fn for fn in os.listdir("results/") if file_filter(fn, args)]
