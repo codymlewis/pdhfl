@@ -2,12 +2,13 @@ import gc
 import numpy as np
 import jax
 import jax.numpy as jnp
+import jax.flatten_util
 
 from . import common
 
 
 class Server:
-    def __init__(self, model, clients, test_data, aggregator="fedavg", C=1.0, seed=42):
+    def __init__(self, model, clients, test_data, aggregator="fedavg", C=1.0, seed=42, quantise_grads=False):
         self.model = model
         self.model.init_parameters()
         self.clients = clients
@@ -16,6 +17,7 @@ class Server:
         self.C = C
         self.K = round(len(clients) * C)
         self.rng = np.random.default_rng(seed)
+        self.quantise_grads = quantise_grads
 
         match aggregator:
             case ["fedavg", "feddrop"]:
@@ -46,9 +48,13 @@ class Server:
             loss, grads, num_samples = c.step(global_parameters)
             client_losses.append(loss)
             client_samples.append(num_samples)
+            if self.quantise_grads:
+                grads = quantise(grads)
             summed_grads, aux = self.aggregate_inc(summed_grads, grads, aux, num_samples)
             gc.collect()
         summed_grads = self.aggregate_compute(summed_grads, aux)
+        if self.quantise_grads:
+            summed_grads = dequantise(summed_grads, a=self.K if self.aggregator == "ppdhfl" else 1)
         if self.aggregator == "ppdhfl":  # In the practical algorithm, the client does this. This just saves on computation
             eta = max(self.eta_0 / (1 + 0.0001 * self.round), 0.0001)
             norm = common.pytree_norm(summed_grads)
@@ -104,3 +110,15 @@ def fed_sparse_avg_inc(summed_grads, client_grads, aux, client_samples):
 
 def fed_sparse_avg_compute(summed_grads, aux):
     return jax.tree_util.tree_map(lambda sg, a: sg / jnp.maximum(1, a), summed_grads, aux)
+
+
+@jax.jit
+def quantise(grads):
+    max_uint = jnp.iinfo(jnp.uint8).max
+    return jax.tree_util.tree_map(lambda x: jnp.clip(x, -max_uint / 2, max_uint / 2) + (max_uint / 2), grads)
+
+
+@jax.jit
+def dequantise(grads, a=1):
+    max_uint = jnp.iinfo(jnp.uint8).max
+    return jax.tree_util.tree_map(lambda x: x - a * (max_uint / 2), grads)

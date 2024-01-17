@@ -151,7 +151,7 @@ def client_ids_to_idx(ids):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-            description="Perform experiments evaluating the performance for device heterogeneous FL.")
+        description="Perform experiments evaluating the performance for device heterogeneous FL.")
     parser.add_argument("-d", "--dataset", type=str, default="mnist", help="Dataset to train on.")
     parser.add_argument("-c", "--clients", type=int, default=0, help="Number of clients in the FL system.")
     parser.add_argument("-s", "--seed", type=int, default=42, help="Seed for the experiment.")
@@ -167,6 +167,8 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--framework", type=str, default="fedavg", help="Federated learning framework to follow")
     parser.add_argument("-psc", "--proportion-clients", type=float, default=1.0,
                         help="Proportion of clients that the server selects for training in each round.")
+    parser.add_argument("-q", "--quantisation", action="store_true",
+                        help="Whether to use SecAgg quantisation (applicable to FedAVG and PPDHFL algorithms only)")
     args = parser.parse_args()
     print(f"Starting experiment with config: {args.__dict__}")
 
@@ -266,7 +268,8 @@ if __name__ == "__main__":
             dataset['test'],
             aggregator=args.framework,
             C=args.proportion_clients,
-            seed=args.seed
+            seed=args.seed,
+            quantise_grads=args.quantisation,
         )
         running_analytics = []
         running_evaluations = []

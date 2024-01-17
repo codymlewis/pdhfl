@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-frameworks=("ppdhfl" "heterofl" "fjord" "feddrop" "local" "fedavg")
+frameworks=("pdhfl" "heterofl" "fjord" "feddrop" "local" "fedavg")
 datasets=("mnist" "har" "nbaiot" "cifar10" "cifar100" "tinyimagenet")
 
 
