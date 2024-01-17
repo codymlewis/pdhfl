@@ -2,7 +2,6 @@ import gc
 import numpy as np
 import jax
 import jax.numpy as jnp
-import jax.flatten_util
 
 from . import common
 
@@ -114,11 +113,11 @@ def fed_sparse_avg_compute(summed_grads, aux):
 
 @jax.jit
 def quantise(grads):
-    max_uint = jnp.iinfo(jnp.uint8).max
-    return jax.tree_util.tree_map(lambda x: jnp.clip(x, -max_uint / 2, max_uint / 2) + (max_uint / 2), grads)
+    max_uint = jnp.iinfo(jnp.uint32).max / 2
+    return jax.tree_util.tree_map(lambda x: jnp.round((x + 10) / 20 * max_uint), grads)
 
 
 @jax.jit
 def dequantise(grads, a=1):
-    max_uint = jnp.iinfo(jnp.uint8).max
-    return jax.tree_util.tree_map(lambda x: x - a * (max_uint / 2), grads)
+    max_uint = jnp.iinfo(jnp.uint32).max / 2
+    return jax.tree_util.tree_map(lambda x: x / max_uint * 20 - 10, grads)
