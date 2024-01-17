@@ -11,15 +11,15 @@ for framework in "ppdhfl" "fedavg"; do
             allocation="sim"
         fi
 
-        if [[ $dataset == "nbaiot" ]]; then
+        if [[ $dataset == "mnist" ]]; then
+            rounds=50
+            batch_size=128
+            clients=100
+        elif [[ $dataset == "nbaiot" ]]; then
             rounds=10
             batch_size=128
             clients=0
-        elif [[ $dataset == "cifar100" ]]; then
-            rounds=100
-            batch_size=32
-            clients=10
-        elif [[ $dataset == "tinyimagenet" ]]; then
+        elif [[ $dataset == "cifar100" ]] || [[ $dataset == "tinyimagenet" ]]; then
             rounds=100
             batch_size=32
             clients=10
