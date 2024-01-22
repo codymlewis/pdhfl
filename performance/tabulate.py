@@ -15,7 +15,7 @@ def formatter(cell_value):
     cell_value = cell_value.replace('fjord', 'FjORD')
     cell_value = cell_value.replace('heterofl', 'HeteroFL')
     cell_value = cell_value.replace('local', 'Local')
-    cell_value = cell_value.replace('ppdhfl', 'PDHFL')
+    cell_value = cell_value.replace('ppdhfl', 'PPDHFL')
     # Format datasets
     cell_value = cell_value.replace('cifar', 'CIFAR-')
     cell_value = cell_value.replace('mnist', 'MNIST')
